@@ -1,0 +1,13 @@
+pandas
+numpy
+geopandas
+shapely
+sqlalchemy
+psycopg2-binary
+streamlit
+plotly
+pyyaml
+pytest
+black
+ruff
+osmnx
