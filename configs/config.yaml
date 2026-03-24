@@ -1,0 +1,26 @@
+project:
+  name: geo-accessibility
+  city: warsaw
+
+paths:
+  raw: data/raw
+  processed: data/processed
+  source: data/source
+
+files:
+  districts_raw: data/raw/districts/warsaw_districts.geojson
+  pois_raw: data/raw/pois/warsaw_pois.geojson
+  population_raw: data/raw/population/warsaw_population.csv
+  transport_raw: data/raw/transport/warsaw_stops.geojson
+
+  districts_processed: data/processed/districts/warsaw_districts.geojson
+  pois_processed: data/processed/pois/warsaw_pois.geojson
+  population_processed: data/processed/population/warsaw_population.csv
+  transport_processed: data/processed/transport/warsaw_stops.geojson
+
+database:
+  host: localhost
+  port: 5432
+  dbname: geoanalytics
+  user: shmeetoo
+  password: 1905
