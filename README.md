@@ -14,7 +14,6 @@ Portfolio project focused on geospatial data engineering and analytics.
 Build an end-to-end data pipeline for urban accessibility analysis.
 
 ## Raw data ingestion
-
 The project ingests:
 - Warsaw district boundaries from a public boundary dataset,
 - POIs from OpenStreetMap via OSMnx,
@@ -23,3 +22,14 @@ The project ingests:
 
 All raw data are stored in `data/raw/` and remain uncleaned until the processing stage.
 Population data currently use district-level values for year 2019.
+
+## Data processing
+Raw datasets are cleaned and standardized into the `data/processed/` layer.
+
+Main processing steps:
+- standardizing district names,
+- unifying coordinate reference systems to EPSG:4326,
+- selecting relevant columns,
+- validating geometries,
+- classifying POIs into higher-level business categories,
+- standardizing transport stop types.
