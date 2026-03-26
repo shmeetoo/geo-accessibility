@@ -1,6 +1,6 @@
 # Geo Accessibility
 
-Portfolio project focused on geospatial data engineering and analytics.
+This project demonstrates a full data pipeline for geospatial data, from raw acquisition to loading into a PostgreSQL/PostGIS database. It uses Python, Pandas/GeoPandas, SQL, Docker, and Git. The goal is to analyze city districts, points of interest, public transport, and population data.
 
 ## Tech stack
 - Python
@@ -9,9 +9,6 @@ Portfolio project focused on geospatial data engineering and analytics.
 - PostgreSQL + PostGIS
 - Docker
 - Streamlit / Plotly Dash
-
-## Project goal
-Build an end-to-end data pipeline for urban accessibility analysis.
 
 ## Raw data ingestion
 The project ingests:
