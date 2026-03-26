@@ -4,6 +4,7 @@ geopandas
 shapely
 sqlalchemy
 psycopg2-binary
+geoalchemy2
 streamlit
 plotly
 pyyaml
@@ -11,3 +12,5 @@ pytest
 black
 ruff
 osmnx
+python-dotenv
+dash
