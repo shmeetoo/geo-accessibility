@@ -2,7 +2,7 @@ from sqlalchemy import text
 from src.db.connection import get_engine
 
 
-def create_tabled():
+def create_tables():
     engine = get_engine()
 
     with engine.connect() as conn:
