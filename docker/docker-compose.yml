@@ -1,9 +1,9 @@
 services:
   db:
     image: postgis/postgis:16-3.4
-    container_name: geo_postgis_db
+    container_name: geo_postgres
     environment:
-      POSTGRES_DB: geoanalytics
+      POSTGRES_DB: geo_db
       POSTGRES_USER: shmeetoo
       POSTGRES_PASSWORD: 1905
     ports:
