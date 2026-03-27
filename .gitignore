@@ -10,3 +10,5 @@ data/processed
 .ipynb_checkpoints/
 
 *.log
+
+reports/*.html
