@@ -14,3 +14,4 @@ ruff
 osmnx
 python-dotenv
 dash
+dash-bootstrap-components
