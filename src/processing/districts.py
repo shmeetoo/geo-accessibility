@@ -2,6 +2,7 @@ import geopandas as gpd
 
 from src.utils.io import save_geodataframe
 from src.utils.logging_utils import get_logger
+from src.processing.mappings import DISTRICT_NAME_MAPPING
 
 logger = get_logger(__name__)
 
@@ -42,6 +43,10 @@ def process_districts(input_path: str, output_path: str) -> gpd.GeoDataFrame:
 
     # skip spaces
     gdf["district_name"] = gdf["district_name"].astype(str).str.strip()
+
+    # standardize district names
+    gdf["district_name"] = gdf["district_name"].map(DISTRICT_NAME_MAPPING).fillna("Unknown")
+
 
     # set / change CRS to EPSG:4326
     if gdf.crs is None:
