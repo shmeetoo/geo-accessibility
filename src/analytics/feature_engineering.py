@@ -32,8 +32,8 @@ districts = districts.merge(population, on="district_name", how="left")
 districts["population"] = districts["population"].fillna(0).astype(int)
 
 # calculate population density per district
-# change crs for proper calculations
-districts["area_km2"] = districts.to_crs(epsg=3395).area / 1e6
+# change crs to planar units for proper calculations (EPSG:2178 best for central-east Poland)
+districts["area_km2"] = districts.to_crs(epsg=2178).area / 1e6
 districts["population_density"] = districts["population"] / districts["area_km2"]
 
 # create analyrics table and save it do db
