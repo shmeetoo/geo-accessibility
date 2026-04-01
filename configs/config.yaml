@@ -17,10 +17,3 @@ files:
   pois_processed: data/processed/pois/warsaw_pois.geojson
   population_processed: data/processed/population/warsaw_population.csv
   transport_processed: data/processed/transport/warsaw_stops.geojson
-
-database:
-  host: localhost
-  port: 5432
-  dbname: geoanalytics
-  user: shmeetoo
-  password: 1905
