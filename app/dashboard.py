@@ -2,6 +2,7 @@ import dash
 from dash import Input, Output, html
 import dash_bootstrap_components as dbc
 import plotly.express as px
+import os
 
 from app.data_loader import load_dashboard_data
 from app.layout import create_layout
@@ -278,4 +279,5 @@ def update_comparison(district_a, district_b):
 
 # run app
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=8050)
+    port = int(os.getenv("PORT", 8050))
+    app.run(debug=False, host="0.0.0.0", port=port)
