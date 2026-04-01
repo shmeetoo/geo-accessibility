@@ -17,7 +17,7 @@ def get_engine():
     db_name = _get_required_env("POSTGRES_DB")
     db_user = _get_required_env("POSTGRES_USER")
     db_password = _get_required_env("POSTGRES_PASSWORD")
-    db_host = os.getenv("POSTGRES_HOST", "localhost")
+    db_host = _get_required_env("POSTGRES_HOST")
     db_port = os.getenv("POSTGRES_PORT", "5432")
 
     connection_string = (
