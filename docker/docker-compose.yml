@@ -1,15 +1,29 @@
 services:
   db:
     image: postgis/postgis:16-3.4
-    container_name: geo_postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    container_name: geo-accessibility-db
+    restart: unless-stopped
+    env_file:
+      - ../.env
     ports:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  dashboard:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: geo-accessibility-dashboard
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    ports:
+      - "8050:8050"
+    depends_on:
+      - db
+    command: >
+      sh -c "python -m scripts.run_pipeline && python -m app.dashboard"
 
 volumes:
   postgres_data:
