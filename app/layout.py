@@ -286,6 +286,42 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                     ),
                 ],
                 className="g-4 mb-5"
+            ),
+
+            # advise panel
+            html.Div(
+                className="container-fluid mt-5",
+                children=[
+                    html.H2(
+                        "Find Best Locations",
+                        className="fw-bold display-6 mb-3",
+                        style={"color": "white"}
+                    ),
+
+                    dcc.Dropdown(
+                        id="category-dropdown",
+                        placeholder="Select category",
+                        className="mb-3",
+                        style={"width": "300px"}
+                    ),
+
+                    html.Div(
+                        id="score-breakdown",
+                        className="mb-4",
+                        style={
+                            "padding": "15px",
+                            "borderRadius": "12px",
+                            "backgroundColor": "#1e1e1e",
+                            "color": "white",
+                            "border": "1px solid #333"
+                        }
+                    ),
+
+                    dcc.Graph(
+                        id="advise-map",
+                        className="mb-4"
+                    )
+                ]
             )
         ],
         fluid=True,
