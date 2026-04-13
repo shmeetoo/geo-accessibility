@@ -1,15 +1,21 @@
 import dash
-from dash import Input, Output, html
+from dash import Input, Output, html, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import os
 
-from app.data_loader import load_dashboard_data
 from app.layout import create_layout
+from app.data_loader import (
+    load_dashboard_data,
+    load_location_advice,
+    load_pois_for_map
+)
 
 
 # load data on startup
 gdf = load_dashboard_data()
+df_advice = load_location_advice()
+df_pois_map = load_pois_for_map()
 
 # add accessibility score (simple weighted metric)
 gdf["accessibility_score"] = (
@@ -276,6 +282,67 @@ def update_summary(click_data):
 )
 def update_comparison(district_a, district_b):
     return build_comparison_panel(district_a, district_b)
+
+@app.callback(
+    Output("category-dropdown", "options"),
+    Input("category-dropdown", "id")
+)
+def set_category_options(_):
+    categories = sorted(df_advice["category"].dropna().unique())
+    return [{"label": c, "value": c} for c in categories]
+
+@app.callback(
+    Output("top-locations", "children"),
+    Input("category-dropdown", "value"),
+    Input("selected-district", "data")
+)
+def update_cards(category, district):
+    if not category or not district:
+        return []
+    
+    df = df_advice[
+        (df_advice["district_name"] == district) &
+        (df_advice["category"] == category)
+    ].sort_values("rank")
+
+    colors = {1: "#2ecc71", 2: "#3498db", 3: "#f39c12"}
+
+    cards = []
+
+    for _, row in df.iterrows():
+        cards.append(
+            html.Div(
+                [
+                    html.H5(f"#{row['rank']}"),
+                    html.P(f"{round(row['score'], 2)}")
+                ],
+                id={"type": "location-card", "index": int(row["rank"])},
+                style={
+                    "padding": "12px",
+                    "borderRadius": "12px",
+                    "backgroundColor": colors[row["rank"]],
+                    "color": "white",
+                    "cursor": "pointer",
+                    "width": "140px",
+                    "textAlign": "center",
+                    "boxShadow": "0 4px 10px rgba(0,0,0,0.3)"
+                }
+            )
+        )
+
+    return cards
+
+@app.callback(
+    Output("selected-rank", "data"),
+    Input({"type": "location-card", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True
+)
+def select_rank(n_clicks):
+    for i, val in enumerate(n_clicks):
+        if val:
+            return i + 1
+        
+    return None
 
 # run app
 if __name__ == "__main__":
