@@ -18,3 +18,23 @@ def load_dashboard_data():
     gdf.to_crs(epsg=4326)
 
     return gdf
+
+def load_location_advice():
+    engine = get_engine()
+
+    query = """
+    SELECT district_name, category, lat, lon, score, rank
+    FROM district_poi_advice
+    """
+
+    return pd.read_sql(query, engine)
+
+def load_pois_for_map():
+    engine = get_engine()
+
+    query = """
+    SELECT district_name, category, ST_Y(geometry) as lat, ST_X(geometry) as lon
+    FROM pois
+    """
+
+    return pd.read_sql(query, engine)
