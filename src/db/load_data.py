@@ -2,6 +2,7 @@ import pandas as pd
 import geopandas as gpd
 
 from src.db.connection import get_engine
+from sqlalchemy import text
 
 def load_districts(path: str):
     print(f"Loading districts from: {path}")
@@ -29,4 +30,10 @@ def load_population(path: str):
     engine = get_engine()
     df = pd.read_csv(path)
     print(f"Population rows: {len(df)}")
-    df.to_sql("population", engine, if_exists="replace", index=False)    
+    df.to_sql("population", engine, if_exists="replace", index=False)
+
+def load_landuse(path: str):
+    print(f"Loading landuse from: {path}")
+    engine = get_engine()
+    gdf = gpd.read_file(path)
+    gdf.to_postgis("landuse", engine, if_exists="replace", index=False)

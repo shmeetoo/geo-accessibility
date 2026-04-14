@@ -4,7 +4,8 @@ from src.db.load_data import (
     load_districts,
     load_pois,
     load_population,
-    load_transport
+    load_transport,
+    load_landuse
 )
 
 def main() -> None:
@@ -24,6 +25,9 @@ def main() -> None:
 
     print("Loading transport...")
     load_transport(config["files"]["transport_processed"])
+
+    print("Loading landuse...")
+    load_landuse(config["files"]["landuse_processed"])
 
     print("Database loading completed successfully.")
 
