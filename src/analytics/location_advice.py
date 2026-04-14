@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from shapely.geometry import Point
 from src.db.connection import get_engine
+from sqlalchemy import text
 
 # helpers
 def normalize(series):
@@ -154,6 +155,12 @@ def run_location_advice():
         if_exists="replace",
         index=False
     )
+
+    # spatial index for faster calculations
+    with engine.connect() as conn:
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_adv_geom ON district_poi_advice USING GIST (geometry);"
+        ))
 
     print("Location recommendations saved to DB")
     print(gdf.crs)

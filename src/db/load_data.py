@@ -11,6 +11,12 @@ def load_districts(path: str):
     print(f"District rows: {len(gdf)}")
     gdf.to_postgis("districts", engine, if_exists="replace", index=False)
 
+    # spatial index for faster calculations
+    with engine.connect() as conn:
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_districts_geom ON districts USING GIST (geometry);"
+        ))
+
 def load_pois(path: str):
     print(f"Loading POIs from: {path}")
     engine = get_engine()
@@ -18,12 +24,24 @@ def load_pois(path: str):
     print(f"POIs rows: {len(gdf)}")
     gdf.to_postgis("pois", engine, if_exists="replace", index=False)
 
+    # spatial index for faster calculations
+    with engine.connect() as conn:
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_pois_geom ON pois USING GIST (geometry);"
+        ))
+
 def load_transport(path: str):
     print(f"Loading transport from: {path}")
     engine = get_engine()
     gdf = gpd.read_file(path)
     print(f"Transport rows: {len(gdf)}")
     gdf.to_postgis("transport", engine, if_exists="replace", index=False)
+
+    # spatial index for faster calculations
+    with engine.connect() as conn:
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_transport_geom ON transport USING GIST (geometry);"
+        ))
 
 def load_population(path: str):
     print(f"Loading population from: {path}")
@@ -37,3 +55,9 @@ def load_landuse(path: str):
     engine = get_engine()
     gdf = gpd.read_file(path)
     gdf.to_postgis("landuse", engine, if_exists="replace", index=False)
+
+    # spatial index for faster calculations
+    with engine.connect() as conn:
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_landuse_geom ON landuse USING GIST (geometry);"
+        ))
