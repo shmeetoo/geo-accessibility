@@ -1,7 +1,8 @@
 from src.ingestion.districts import ingest_districts
-from src.ingestion.osm import ingest_pois
+from src.ingestion.pois import ingest_pois
 from src.ingestion.population import ingest_population
 from src.ingestion.transport import ingest_transport_stops
+from src.ingestion.landuse import ingest_landuse
 from src.utils.config import load_config
 
 def main() -> None:
@@ -25,6 +26,11 @@ def main() -> None:
     ingest_transport_stops(
         place_name="Warsaw, Poland",
         output_path=config["files"]["transport_raw"]
+    )
+
+    ingest_landuse(
+        place_name="Warsaw, Poland",
+        output_path=config["files"]["landuse_raw"]
     )
 
 if __name__ == "__main__":
