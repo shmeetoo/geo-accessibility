@@ -133,10 +133,9 @@ def run_location_advice():
                 results.append({
                     "district_name": district_name,
                     "category": category,
-                    "lat": row.geometry.y,
-                    "lon": row.geometry.x,
                     "score": row.score,
-                    "rank": rank
+                    "rank": rank,
+                    "geometry": row.geometry
                 })
 
     if not results:
@@ -146,6 +145,9 @@ def run_location_advice():
     gdf = gpd.GeoDataFrame(results, geometry="geometry", crs="EPSG:2178")
     gdf = gdf.to_crs(epsg=4326) #swap back to 4326 to eliminate location errors
 
+    gdf["lat"] = gdf.geometry.y
+    gdf["lon"] = gdf.geometry.x
+
     gdf.to_postgis(
         "district_poi_advice",
         engine,
@@ -154,3 +156,6 @@ def run_location_advice():
     )
 
     print("Location recommendations saved to DB")
+    print(gdf.crs)
+
+run_location_advice()
