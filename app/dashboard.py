@@ -2,6 +2,7 @@ import dash
 from dash import Input, Output, html, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
+import plotly.graph_objects as go
 import os
 
 from app.layout import create_layout
@@ -343,6 +344,103 @@ def select_rank(n_clicks):
             return i + 1
         
     return None
+
+@app.callback(
+    Output("advise-map", "figure"),
+    Input("category-dropdown", "value"),
+    Input("selected-district", "data"),
+    Input("selected-rank", "data")
+)
+def update_map(category, district, selected_rank):
+    if not category or not district:
+        return go.Figure()
+    
+    df = df_advice[
+        (df_advice["district_name"] == district) &
+        (df_advice["category"] == category)
+    ].copy()
+
+    pois = df_pois_map[
+        (df_pois_map["district_name"] == district) &
+        (df_pois_map["poi_category"] == category)
+    ].copy()
+
+    # highlight selected
+    df["size"] = df["rank"].apply(lambda x: 20 if x == selected_rank else 12)
+    df["color"] = df["rank"].astype(str)
+
+    # base map
+    fig = px.scatter_map(
+        df,
+        lat="lat",
+        lon="lon",
+        color="color",
+        size="size",
+        hover_data=["score", "rank"],
+        zoom=12,
+        height=500
+    )
+
+    # add pois as overlay
+    fig.add_scattermap(
+        lat=pois["lat"],
+        lon=pois["lon"],
+        mode="markers",
+        marker=dict(size=6, color="gray"),
+        name="POI"
+    )
+
+    fig.update_layout(
+        mapbox_style="carto-positron",
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
+
+    return fig
+
+@app.callback(
+    Output("score-breakdown", "children"),
+    Input("selected-rank", "data"),
+    Input("category-dropdown", "value"),
+    Input("selected-district", "data")
+)
+def update_breakdown(rank, category, district):
+    if not rank or not category or not district:
+        return "Select a location"
+    
+    df = df_advice[
+        (df_advice["district_name"] == district) &
+        (df_advice["category"] == category) &
+        (df_advice["rank"] == rank)
+    ].copy()
+
+    if df.empty:
+        return "No data"
+    
+    row = df.iloc[0]
+
+    return html.Div([
+        html.H4(f"Location #{rank}"),
+        html.P(f"Final Score: {round(row['score'], 3)}"),
+
+        html.H5("Why this location?"),
+        html.Ul([
+            html.Li("Optimal distance from competitors"),
+            html.Li("Balanced local density"),
+            html.Li("Good transport accessibility"),
+            html.Li("High population demand")
+        ])
+    ])
+
+@app.callback(
+    Output("selected-district", "data"),
+    Input("district-map", "clickData")
+)
+def store_selected_district(click_data):
+    if click_data is None:
+        return None
+    
+    point_index = click_data["points"][0]["location"]
+    return gdf.iloc[point_index]["district_name"]
 
 # run app
 if __name__ == "__main__":
