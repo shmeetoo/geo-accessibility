@@ -38,6 +38,9 @@ def create_kpi_card(title, value, subtitle=None, icon=None):
 def create_layout(metric_options, default_metric, district_options, kpis):
    return dbc.Container(
         [
+            dcc.Store(id="selected-district"),
+            dcc.Store(id="selected-rank"),
+
             # hero header
             dbc.Row(
                 [
@@ -289,39 +292,71 @@ def create_layout(metric_options, default_metric, district_options, kpis):
             ),
 
             # advise panel
-            html.Div(
-                className="container-fluid mt-5",
-                children=[
-                    html.H2(
-                        "Find Best Locations",
-                        className="fw-bold display-6 mb-3",
-                        style={"color": "white"}
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.H5(
+                                        "Location Recommendation",
+                                        className="fw-bold mb-3",
+                                        style={"color": "#0f172a"}
+                                    ),
+
+                                    html.Label(
+                                        "POI Category",
+                                        className="fw-semibold mb-2",
+                                        style={"color": "#334155"}
+                                    ),
+
+                                    dcc.Dropdown(
+                                        id="category-dropdown",
+                                        placeholder="Select category",
+                                        className="mb-4"
+                                    ),
+
+                                    html.Div(
+                                        id="top-locations",
+                                        className="d-flex gap-3 mb-4"
+                                    ),
+
+                                    html.Div(
+                                        id="score-breakdown",
+                                        className="p-3 rounded-4",
+                                        style={
+                                            "backgroundColor": "#f8fafc",
+                                            "border": "1px solid #e2e8f0"
+                                        }
+                                    ),
+                                ],
+                                className="p-4"
+                            ),
+                            className="shadow-sm border-0 rounded-4 h-100"
+                        ),
+                        lg=3
                     ),
 
-                    dcc.Dropdown(
-                        id="category-dropdown",
-                        placeholder="Select category",
-                        className="mb-3",
-                        style={"width": "300px"}
-                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.H5(
+                                        "Recommended Locations Map",
+                                        className="fw-bold mb-3",
+                                        style={"color": "#0f172a"}
+                                    ),
 
-                    html.Div(
-                        id="score-breakdown",
-                        className="mb-4",
-                        style={
-                            "padding": "15px",
-                            "borderRadius": "12px",
-                            "backgroundColor": "#1e1e1e",
-                            "color": "white",
-                            "border": "1px solid #333"
-                        }
-                    ),
-
-                    dcc.Graph(
-                        id="advise-map",
-                        className="mb-4"
+                                    dcc.Graph(id="advise-map", config={"displayModeBar": False})
+                                ],
+                                className="p-4"
+                            ),
+                            className="shadow-sm border-0 rounded-4 h-100"
+                        ),
+                        lg=9
                     )
-                ]
+                ],
+                className="g-4 mb-5"
             )
         ],
         fluid=True,
