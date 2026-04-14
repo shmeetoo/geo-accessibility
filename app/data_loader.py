@@ -7,8 +7,14 @@ def load_dashboard_data():
     engine = get_engine()
 
     query = """
-    SELECT d.district_name, d.geometry, f.population, f.area_km2, 
-        f.population_density, f.poi_count, f.transport_count
+    SELECT 
+        d.district_name,
+        d.geometry,
+        f.population,
+        f.area_km2, 
+        f.population_density,
+        f.poi_count,
+        f.transport_count
     FROM districts d
     JOIN district_features f
     ON d.district_name = f.district_name
@@ -23,7 +29,13 @@ def load_location_advice():
     engine = get_engine()
 
     query = """
-    SELECT district_name, category, lat, lon, score, rank
+    SELECT 
+        district_name,
+        category,
+        lat,
+        lon,
+        score,
+        rank
     FROM district_poi_advice
     """
 
@@ -33,8 +45,14 @@ def load_pois_for_map():
     engine = get_engine()
 
     query = """
-    SELECT district_name, category, ST_Y(geometry) as lat, ST_X(geometry) as lon
-    FROM pois
+    SELECT 
+        d.district_name,
+        p.poi_category,
+        ST_Y(ST_Centroid(p.geometry)) AS lat,
+        ST_X(ST_Centroid(p.geometry)) AS lon
+    FROM pois p
+    JOIN districts d
+    ON ST_Within(p.geometry, d.geometry)
     """
 
     return pd.read_sql(query, engine)
