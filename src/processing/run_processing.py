@@ -2,6 +2,8 @@ from src.processing.districts import process_districts
 from src.processing.pois import process_pois
 from src.processing.population import process_population
 from src.processing.transport import process_transport
+from src.processing.landuse import process_landuse
+
 from src.utils.config import load_config
 
 def main() -> None:
@@ -25,6 +27,11 @@ def main() -> None:
     process_transport(
         input_path=config["files"]["transport_raw"],
         output_path=config["files"]["transport_processed"]
+    )
+
+    process_landuse(
+        input_path=config["files"]["landuse_raw"],
+        output_path=config["files"]["landuse_processed"]
     )
 
 if __name__ == "__main__":
