@@ -25,7 +25,8 @@ def main():
         ("Run ingestion", "src.ingestion.run_ingestion"),
         ("Run proccessing", "src.processing.run_processing"),
         ("Load data to PostgreSQL", "src.db.run_load"),
-        ("Create analytics table", "src.analytics.feature_engineering")
+        ("Create analytics table", "src.analytics.feature_engineering"),
+        ("Create location advice table", "src.analytics.location_advice")
     ]
 
     for step_name, script_path in steps:
