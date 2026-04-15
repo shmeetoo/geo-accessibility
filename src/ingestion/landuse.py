@@ -21,6 +21,11 @@ def ingest_landuse(place_name: str, output_path: str) -> gpd.GeoDataFrame:
     gdf = gdf.reset_index()
     logger.info("Downloaded %s landuse data records", len(gdf))
     
+    # keep only relevant columns to reduce file size
+    cols = ["geometry", "landuse", "leisure", "natural", "railway"]
+    cols = [c for c in cols if c in gdf.columns]
+    gdf = gdf[cols]
+
     save_geodataframe(gdf, output_path)
     logger.info("Saved raw landuse data to %s", output_path)
 

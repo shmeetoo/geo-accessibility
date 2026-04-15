@@ -38,11 +38,11 @@ def process_landuse(input_path: str, output_path: str) -> gpd.GeoDataFrame:
     )
     
     gdf = gdf[["geometry", "type"]]
-    
     gdf = gdf[gdf["type"].notna()]
-    
     gdf = gdf[gdf["type"].isin(EXCLUDED_TYPES)]
     
+    # keep polygons, remove rubbish data
+    gdf = gdf[gdf.geometry.type.isin(["Polygon", "MultiPolygon"])]
     gdf = gdf[gdf.geometry.notnull()].copy()
     gdf = gdf[gdf.is_valid].copy()
 
