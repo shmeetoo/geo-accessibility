@@ -78,6 +78,20 @@ def compute_scores(grid, pois, transport, population_density):
 
     return grid
 
+def filter_landuse(grid, landuse):
+    landuse = landuse.to_crs(grid.crs)
+
+    joined = gpd.sjoin(
+        grid,
+        landuse,
+        how="left",
+        predicate="intersects"
+    )
+
+    clean = joined[joined["type"].isna()]
+
+    return clean[["geometry"]].copy()
+
 def run_location_advice():
     engine = get_engine()
 
@@ -90,7 +104,8 @@ def run_location_advice():
         engine
     )
     districts = districts.merge(pop_density, on="district_name", how="left")
-
+    landuse = gpd.read_postgis("SELECT * FROM landuse", engine, geom_col="geometry")
+    
     # normlize density for proper score calculations
     pop_dens = pop_density["population_density"]
     pop_norm = (pop_dens - pop_dens.min()) / (pop_dens.max() - pop_dens.min())
@@ -117,6 +132,7 @@ def run_location_advice():
             continue
 
         grid = generate_grid(geom)
+        grid = filter_landuse(grid, landuse)
 
         p_density = district_row["pop_norm"]
 
@@ -163,6 +179,5 @@ def run_location_advice():
         ))
 
     print("Location recommendations saved to DB")
-    print(gdf.crs)
 
 run_location_advice()
