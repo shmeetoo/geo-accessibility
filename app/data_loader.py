@@ -48,6 +48,7 @@ def load_pois_for_map():
     SELECT 
         d.district_name,
         p.poi_category,
+        p.name,
         ST_Y(ST_Centroid(p.geometry)) AS lat,
         ST_X(ST_Centroid(p.geometry)) AS lon
     FROM pois p
