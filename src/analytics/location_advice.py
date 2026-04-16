@@ -98,6 +98,7 @@ def run_location_advice():
     # load data
     districts = gpd.read_postgis("SELECT * FROM districts", engine, geom_col="geometry")
     pois = gpd.read_postgis("SELECT * FROM pois", engine, geom_col="geometry")
+    pois = pois[pois["poi_category"] != "green_area"]
     transport = gpd.read_postgis("SELECT * FROM transport", engine, geom_col="geometry")
     pop_density = pd.read_sql(
         "SELECT district_name, population_density FROM district_features",
