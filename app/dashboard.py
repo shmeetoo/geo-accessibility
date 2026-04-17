@@ -1,9 +1,10 @@
 import dash
-from dash import Input, Output, html, ALL
+from dash import Input, Output, State, html, ALL, ctx
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 import os
+import pandas as pd
 
 from app.layout import create_layout
 from app.data_loader import (
@@ -11,7 +12,6 @@ from app.data_loader import (
     load_location_advice,
     load_pois_for_map
 )
-
 
 # load data on startup
 gdf = load_dashboard_data()
@@ -249,6 +249,120 @@ def build_comparison_panel(district_a, district_b):
         className="align-middle"
     )
 
+def build_category_cards(district):
+    if not district:
+        return []
+    
+    df = df_advice[df_advice["district_name"] == district]
+
+    categories = sorted(df["category"].unique())
+
+    cards = []
+
+    for c in categories:
+        cards.append(
+            html.Div(
+                c,
+                id={"type": "category-card", "index": c},
+                className="fw-semibold",
+                style={
+                    "padding": "10px 16px",
+                    "borderRadius": "12px",
+                    "backgroundColor": "#e2e8f0",
+                    "cursor": "pointer"
+                }
+            )
+        )
+
+    return cards
+
+def empty_advice_map():
+    df = pd.DataFrame({"lat": [52.2297], "lon": [21.0122]})
+
+    fig = px.scatter_map(
+        df,
+        lat="lat",
+        lon="lon",
+        zoom=10
+    )
+
+    fig.update_layout(
+        map_style="carto-positron",
+        annotations=[
+            dict(
+                text="Select a district and a category to see recommendations",
+                x=0.5,
+                y=0.5,
+                showarrow=False,
+                font=dict(size=20, color="#64748b")
+            )
+        ],
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
+
+    return fig
+
+def build_advice_map(df, pois, district_geom):
+    # advice map legend
+    df = df.copy()
+    df["label"] = df["rank"].map({
+        1: "Best location",
+        2: "Second best",
+        3: "Third best"
+    })
+
+    df["size"] = df["rank"].map({
+        1: 15,
+        2: 10,
+        3: 5
+    })
+
+    fig = px.scatter_map(
+        df,
+        lat="lat",
+        lon="lon",
+        color="label",
+        size="size",
+        hover_data={"score": True},
+        zoom=12
+    )
+
+    # district boundaries
+    for _, row in district_geom.iterrows():
+        geom = row.geometry
+
+        for polygon in geom.geoms:
+            x, y = polygon.exterior.coords.xy
+            fig.add_trace(go.Scattermap(
+                lon=list(x),
+                lat=list(y),
+                mode="lines",
+                line=dict(width=2, color="rgba(0,0,0,0.5)"),
+                hoverinfo="skip",
+                showlegend=False
+            ))
+
+    # POI as overlay
+    poi_fig = px.scatter_map(
+        pois,
+        lat="lat",
+        lon="lon",
+        hover_name="name"
+    )
+
+    for trace in poi_fig.data:
+        trace.marker.size = 6
+        trace.marker.color = "gray"
+        trace.name = "Existing POI"
+        fig.add_trace(trace)
+
+    fig.update_layout(
+        legend_title_text="Recommendation Rank",
+        map_style="carto-positron",
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
+
+    return fig
 
 # callbacks
 @app.callback(
@@ -266,9 +380,6 @@ def update_visuals(metric):
 )
 def update_summary(click_data):
     if click_data is None:
-        default_district = (
-            gdf.sort_values("accessibility_score", ascending=False).iloc[0]["district_name"]
-        )
         return build_summary_card(None)
     
     point_index = click_data["points"][0]["location"]
@@ -285,75 +396,32 @@ def update_comparison(district_a, district_b):
     return build_comparison_panel(district_a, district_b)
 
 @app.callback(
-    Output("category-dropdown", "options"),
-    Input("category-dropdown", "id")
-)
-def set_category_options(_):
-    categories = sorted(df_advice["category"].dropna().unique())
-    return [{"label": c, "value": c} for c in categories]
-
-@app.callback(
-    Output("top-locations", "children"),
-    Input("category-dropdown", "value"),
+    Output("category-cards", "children"),
     Input("selected-district", "data")
 )
-def update_cards(category, district):
-    if not category or not district:
-        return []
-    
-    df = df_advice[
-        (df_advice["district_name"] == district) &
-        (df_advice["category"] == category)
-    ].sort_values("rank")
-
-    colors = {1: "#2ecc71", 2: "#3498db", 3: "#f39c12"}
-
-    cards = []
-
-    for _, row in df.iterrows():
-        cards.append(
-            html.Div(
-                [
-                    html.H5(f"#{row['rank']}"),
-                    html.P(f"{round(row['score'], 2)}")
-                ],
-                id={"type": "location-card", "index": int(row["rank"])},
-                style={
-                    "padding": "12px",
-                    "borderRadius": "12px",
-                    "backgroundColor": colors[row["rank"]],
-                    "color": "white",
-                    "cursor": "pointer",
-                    "width": "140px",
-                    "textAlign": "center",
-                    "boxShadow": "0 4px 10px rgba(0,0,0,0.3)"
-                }
-            )
-        )
-
-    return cards
+def update_category_cards(district):
+    return build_category_cards(district)
 
 @app.callback(
-    Output("selected-rank", "data"),
-    Input({"type": "location-card", "index": ALL}, "n_clicks"),
+    Output("selected-category", "data"),
+    Input({"type": "category-card", "index": ALL}, "n_clicks"),
+    State({"type": "category-card", "index": ALL}, "id"),
     prevent_initial_call=True
 )
-def select_rank(n_clicks):
-    for i, val in enumerate(n_clicks):
-        if val:
-            return i + 1
+def select_category(n_clicks, ids):
+    if not ctx.triggered_id:
+        return None
         
-    return None
+    return ctx.triggered_id["index"]
 
 @app.callback(
     Output("advise-map", "figure"),
-    Input("category-dropdown", "value"),
+    Input("selected-category", "data"),
     Input("selected-district", "data"),
-    Input("selected-rank", "data")
 )
-def update_map(category, district, selected_rank):
+def update_advice_map(category, district):
     if not category or not district:
-        return go.Figure()
+        return empty_advice_map()
     
     df = df_advice[
         (df_advice["district_name"] == district) &
@@ -364,72 +432,10 @@ def update_map(category, district, selected_rank):
         (df_pois_map["district_name"] == district) &
         (df_pois_map["poi_category"] == category)
     ].copy()
-
-    # highlight selected
-    df["size"] = df["rank"].apply(lambda x: 20 if x == selected_rank else 12)
-    df["color"] = df["rank"].astype(str)
-
-    # base map
-    fig = px.scatter_map(
-        df,
-        lat="lat",
-        lon="lon",
-        color="color",
-        size="size",
-        hover_data=["score", "rank"],
-        zoom=12,
-        height=500
-    )
-
-    # add pois as overlay
-    fig.add_scattermap(
-        lat=pois["lat"],
-        lon=pois["lon"],
-        mode="markers",
-        marker=dict(size=6, color="gray"),
-        name="POI"
-    )
-
-    fig.update_layout(
-        mapbox_style="carto-positron",
-        margin=dict(l=0, r=0, t=0, b=0)
-    )
-
-    return fig
-
-@app.callback(
-    Output("score-breakdown", "children"),
-    Input("selected-rank", "data"),
-    Input("category-dropdown", "value"),
-    Input("selected-district", "data")
-)
-def update_breakdown(rank, category, district):
-    if not rank or not category or not district:
-        return "Select a location"
     
-    df = df_advice[
-        (df_advice["district_name"] == district) &
-        (df_advice["category"] == category) &
-        (df_advice["rank"] == rank)
-    ].copy()
+    district_geom = gdf[gdf["district_name"] == district]
 
-    if df.empty:
-        return "No data"
-    
-    row = df.iloc[0]
-
-    return html.Div([
-        html.H4(f"Location #{rank}"),
-        html.P(f"Final Score: {round(row['score'], 3)}"),
-
-        html.H5("Why this location?"),
-        html.Ul([
-            html.Li("Optimal distance from competitors"),
-            html.Li("Balanced local density"),
-            html.Li("Good transport accessibility"),
-            html.Li("High population demand")
-        ])
-    ])
+    return build_advice_map(df, pois, district_geom)
 
 @app.callback(
     Output("selected-district", "data"),

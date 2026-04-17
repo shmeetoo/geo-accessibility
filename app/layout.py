@@ -39,7 +39,7 @@ def create_layout(metric_options, default_metric, district_options, kpis):
    return dbc.Container(
         [
             dcc.Store(id="selected-district"),
-            dcc.Store(id="selected-rank"),
+            dcc.Store(id="selected-category"),
 
             # hero header
             dbc.Row(
@@ -310,25 +310,10 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                                         style={"color": "#334155"}
                                     ),
 
-                                    dcc.Dropdown(
-                                        id="category-dropdown",
-                                        placeholder="Select category",
-                                        className="mb-4"
-                                    ),
-
                                     html.Div(
-                                        id="top-locations",
-                                        className="d-flex gap-3 mb-4"
-                                    ),
-
-                                    html.Div(
-                                        id="score-breakdown",
-                                        className="p-3 rounded-4",
-                                        style={
-                                            "backgroundColor": "#f8fafc",
-                                            "border": "1px solid #e2e8f0"
-                                        }
-                                    ),
+                                        id="category-cards",
+                                        className="d-flex flex-wrap gap-3 mb-4"
+                                    )
                                 ],
                                 className="p-4"
                             ),
