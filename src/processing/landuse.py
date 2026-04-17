@@ -9,12 +9,26 @@ logger = get_logger(__name__)
 EXCLUDED_TYPES = [
     "park",
     "forest",
+    "meadow",
+    "cemetery",
+    "recreation_ground",
+    "village_green",
+    "garden",
     "grass",
+    "pitch",
+    "stadium",
+    "golf_course",
     "water",
     "river",
     "railway",
     "industrial",
-    "reservoir"
+    "reservoir",
+    "nature_reserve",
+    "wood",
+    "grassland",
+    "wetland",
+    "scrub",
+    "graveyard"
 ]
 
 def process_landuse(input_path: str, output_path: str) -> gpd.GeoDataFrame:
