@@ -78,11 +78,20 @@ def compute_scores(grid, pois, transport, population_density):
 
     return grid
 
-def filter_landuse(grid, landuse):
+def filter_landuse(grid, landuse, buffer_m=30):
     landuse = landuse.to_crs(grid.crs)
 
+    landuse = landuse[landuse["type"].notna()].copy()
+
+    # fix geometries
+    landuse["geometry"] = landuse["geometry"].buffer(0)
+
+    # apply buffer
+    grid_buffered = grid.copy()
+    grid_buffered["geometry"] = grid_buffered.buffer(buffer_m)
+
     joined = gpd.sjoin(
-        grid,
+        grid_buffered,
         landuse,
         how="left",
         predicate="intersects"
@@ -90,7 +99,7 @@ def filter_landuse(grid, landuse):
 
     clean = joined[joined["type"].isna()]
 
-    return clean[["geometry"]].copy()
+    return grid.loc[clean.index][["geometry"]].copy()
 
 def run_location_advice():
     engine = get_engine()
@@ -133,7 +142,7 @@ def run_location_advice():
             continue
 
         grid = generate_grid(geom)
-        grid = filter_landuse(grid, landuse)
+        grid = filter_landuse(grid, landuse, 30)
 
         p_density = district_row["pop_norm"]
 
