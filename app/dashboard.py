@@ -268,7 +268,7 @@ def build_category_cards(district):
                 style={
                     "padding": "10px 16px",
                     "borderRadius": "12px",
-                    "backgroundColor": "#e2e8f0",
+                    "backgroundColor": "#f8fafc",
                     "cursor": "pointer"
                 }
             )
@@ -286,18 +286,27 @@ def empty_advice_map():
         zoom=10
     )
 
+    fig.update_traces(
+        marker=dict(size=0, opacity=0),
+        hovertemplate=None,
+        hoverinfo="skip"
+    )
+
     fig.update_layout(
-        map_style="carto-positron",
+        map_style="carto-positron-nolabels",
         annotations=[
             dict(
-                text="Select a district and a category to see recommendations",
+                text="Select a district to see recommendations",
                 x=0.5,
                 y=0.5,
+                xref="paper",
+                yref="paper",
                 showarrow=False,
                 font=dict(size=20, color="#64748b")
             )
         ],
-        margin=dict(l=0, r=0, t=0, b=0)
+        margin=dict(l=0, r=0, t=0, b=0),
+        showlegend=False
     )
 
     return fig
