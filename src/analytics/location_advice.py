@@ -2,6 +2,8 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 from shapely.geometry import Point
+from shapely.prepared import prep
+from shapely.geometry import box
 from src.db.connection import get_engine
 from sqlalchemy import text
 
@@ -23,11 +25,26 @@ def generate_grid(district_geom):
             point = Point(x, y)
             if district_geom.contains(point):
                 points.append(point)
-            y += 300 #grid size ~300m
-        x += 300
+            y += 100 #grid size ~100m
+        x += 100
 
     return gpd.GeoDataFrame(geometry=points, crs="EPSG:2178")
 
+def build_urban_mask(landuse: gpd.GeoDataFrame, buffer_m=50):
+    landuse = landuse.to_crs(epsg=2178)
+
+    landuse["geometry"] = landuse.buffer(buffer_m)
+
+    union = landuse.geometry.union_all()
+
+    return prep(union)
+
+def filter_to_urban(grid: gpd.GeoDataFrame, urban_mask):
+    if urban_mask is None:
+        return grid
+    
+    mask = grid.geometry.apply(lambda x: urban_mask.intersects(x))
+    return grid[mask].copy()
 
 def compute_scores(grid, pois, transport, population_density):
     # distance to closest poi of the same category
@@ -48,17 +65,23 @@ def compute_scores(grid, pois, transport, population_density):
 
     # additional scoring parameters
     # distance (gaussian sweet spot ~300-800m)
-    grid["distance_score"] = grid["dist_poi"].apply(
-        lambda x: np.exp(-((x - 500) ** 2) / (2 * 300 ** 2))
-    )
+    grid["distance_score"] = np.exp(-((grid["dist_poi"] - 400) ** 2) / (2 * 250 ** 2))
+
+    # hard penalty for "empty" places
+    grid.loc[
+        grid["dist_poi"] > 1200, "distance_score"
+    ] *= 0.2
 
     # density (sweet spot)
-    grid["density_score"] = grid["density"].apply(
-        lambda x: np.exp(-((x - 3) ** 2) / 5)
-    )
+    grid["density_score"] = np.exp(-((grid["density"] - 3) ** 2) / 5)
+    
+    # hard penalty for "empty" places
+    grid.loc[
+        grid["density"] == 0, "density_score"
+    ]  *= 0.1
 
-    # transport score
-    grid["transport_score"] = 1 / (1 + grid["dist_transport"])
+    # transport score (sweet spot)
+    grid["transport_score"] = np.exp(-((grid["dist_transport"] - 200) ** 2) / (2 * 150 ** 2))
 
     # demand
     grid["demand_score"] = population_density
@@ -70,36 +93,35 @@ def compute_scores(grid, pois, transport, population_density):
 
     # score
     grid["score"] = (
-        0.3 * grid["distance_score"]
-        + 0.2 * grid["density_score"]
-        + 0.25 * grid["transport_score"]
-        + 0.25 * grid["demand_score"]
+        0.30 * grid["distance_score"] +
+        0.25 * grid["density_score"] +
+        0.25 * grid["transport_score"] +
+        0.20 * grid["demand_score"]
     )
+
+    # remove potential duplicates within top3 points
+    grid["score"] += np.random.normal(0, 1e-6, len(grid))
+
+    grid.loc[
+        (grid["dist_transport"] > 300) & (grid["density"] == 0),
+        "score"
+    ] *= 0.1
 
     return grid
 
-def filter_landuse(grid, landuse, buffer_m=30):
-    landuse = landuse.to_crs(grid.crs)
+def select_top_k_with_spacing(gdf, k=3, min_dist=300):
+    selected = []
 
-    landuse = landuse[landuse["type"].notna()].copy()
+    for _, row in gdf.sort_values("score", ascending=False).iterrows():
+        point = row.geometry
 
-    # fix geometries
-    landuse["geometry"] = landuse["geometry"].buffer(0)
+        if all(point.distance(sel.geometry) >= min_dist for sel in selected):
+            selected.append(row)
 
-    # apply buffer
-    grid_buffered = grid.copy()
-    grid_buffered["geometry"] = grid_buffered.buffer(buffer_m)
+        if len(selected) == k:
+            break
 
-    joined = gpd.sjoin(
-        grid_buffered,
-        landuse,
-        how="left",
-        predicate="intersects"
-    )
-
-    clean = joined[joined["type"].isna()]
-
-    return grid.loc[clean.index][["geometry"]].copy()
+    return gpd.GeoDataFrame(selected, crs=gdf.crs)
 
 def run_location_advice():
     engine = get_engine()
@@ -109,22 +131,26 @@ def run_location_advice():
     pois = gpd.read_postgis("SELECT * FROM pois", engine, geom_col="geometry")
     pois = pois[pois["poi_category"] != "green_area"]
     transport = gpd.read_postgis("SELECT * FROM transport", engine, geom_col="geometry")
+    landuse = gpd.read_postgis("SELECT * FROM landuse", engine, geom_col="geometry")
     pop_density = pd.read_sql(
         "SELECT district_name, population_density FROM district_features",
         engine
     )
     districts = districts.merge(pop_density, on="district_name", how="left")
-    landuse = gpd.read_postgis("SELECT * FROM landuse", engine, geom_col="geometry")
     
     # normlize density for proper score calculations
     pop_dens = pop_density["population_density"]
     pop_norm = (pop_dens - pop_dens.min()) / (pop_dens.max() - pop_dens.min())
     districts["pop_norm"] = pop_norm
 
-
     districts = districts.to_crs(epsg=2178)
     pois = pois.to_crs(epsg=2178)
     transport = transport.to_crs(epsg=2178)
+    landuse = landuse.to_crs(epsg=2178)
+
+    urban_mask = build_urban_mask(landuse, buffer_m=10)
+    historic = landuse[landuse["historic"].notna()]
+    historic_union = historic.geometry.union_all()
 
     results = []
 
@@ -142,7 +168,8 @@ def run_location_advice():
             continue
 
         grid = generate_grid(geom)
-        grid = filter_landuse(grid, landuse, 30)
+        grid = grid[~grid.geometry.intersects(historic_union)]
+        grid = filter_to_urban(grid, urban_mask)
 
         p_density = district_row["pop_norm"]
 
@@ -154,7 +181,7 @@ def run_location_advice():
 
             grid_scored = compute_scores(grid.copy(), pois_subset, transport_d, p_density)
 
-            top = grid_scored.sort_values("score", ascending=False).head(3)
+            top = select_top_k_with_spacing(grid_scored, k=3, min_dist=300)
 
             for rank, (_, row) in enumerate(top.iterrows(), start=1):
                 results.append({
