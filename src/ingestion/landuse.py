@@ -10,9 +10,7 @@ logger = get_logger(__name__)
 def ingest_landuse(place_name: str, output_path: str) -> gpd.GeoDataFrame:
     tags = {
         "landuse": True,
-        "leisure": True,
-        "natural": True,
-        "railway": True
+        "historic": True,
     }
 
     logger.info("Downloading landuse data for %s", place_name)
@@ -22,7 +20,7 @@ def ingest_landuse(place_name: str, output_path: str) -> gpd.GeoDataFrame:
     logger.info("Downloaded %s landuse data records", len(gdf))
     
     # keep only relevant columns to reduce file size
-    cols = ["geometry", "landuse", "leisure", "natural", "railway"]
+    cols = ["geometry", "landuse", "historic"]
     cols = [c for c in cols if c in gdf.columns]
     gdf = gdf[cols]
 

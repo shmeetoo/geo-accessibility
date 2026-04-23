@@ -6,29 +6,18 @@ from src.utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
-EXCLUDED_TYPES = [
-    "park",
-    "forest",
-    "meadow",
-    "cemetery",
-    "recreation_ground",
-    "village_green",
-    "garden",
-    "grass",
-    "pitch",
-    "stadium",
-    "golf_course",
-    "water",
-    "river",
-    "railway",
-    "industrial",
-    "reservoir",
-    "nature_reserve",
-    "wood",
-    "grassland",
-    "wetland",
-    "scrub",
-    "graveyard"
+URBAN_LANDUSE = [
+    "residential",
+    "commercial",
+    "retail"
+]
+
+HISTORIC_LANDUSE = [
+    "fort",
+    "building",
+    "castle",
+    "manor",
+    "ruins"
 ]
 
 def process_landuse(input_path: str, output_path: str) -> gpd.GeoDataFrame:
@@ -40,22 +29,15 @@ def process_landuse(input_path: str, output_path: str) -> gpd.GeoDataFrame:
     gdf = gdf.to_crs(epsg=4326)
 
     # choose of columns
-    cols = ["geometry", "landuse", "leisure", "natural", "railway"]
+    cols = ["geometry", "landuse", "historic"]
     gdf = gdf[[c for c in cols if c in gdf.columns]]
 
-    # combine to one column - type
-    gdf["type"] = (
-        gdf["landuse"]
-        .fillna(gdf.get("leisure"))
-        .fillna(gdf.get("natural"))
-        .fillna(gdf.get("railway"))
-    )
-    
-    gdf = gdf[["geometry", "type"]]
-    gdf = gdf[gdf["type"].notna()]
-    gdf = gdf[gdf["type"].isin(EXCLUDED_TYPES)]
-    
-    # keep polygons, remove rubbish data
+    # choose only urban and historic areas
+    gdf = gdf[
+        (gdf["landuse"].isin(URBAN_LANDUSE)) | (gdf["historic"].isin(HISTORIC_LANDUSE))
+    ]
+
+    # keep polygons, clean geometry
     gdf = gdf[gdf.geometry.type.isin(["Polygon", "MultiPolygon"])]
     gdf = gdf[gdf.geometry.notnull()].copy()
     gdf = gdf[gdf.is_valid].copy()
