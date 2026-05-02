@@ -57,6 +57,9 @@ def process_pois(input_path: str, output_path: str) -> gpd.GeoDataFrame:
     if "shop" not in gdf.columns:
         gdf["shop"] = None
 
+    # fill na names
+    gdf["name"] = gdf["name"].fillna("Unknown")
+
     # add poi_category and subcategory columns
     gdf["poi_category"] = gdf.apply(classify_poi, axis=1)
     gdf["subcategory"] = gdf.apply(get_subcategory, axis=1)
