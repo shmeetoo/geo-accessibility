@@ -138,48 +138,97 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                         dbc.Card(
                             dbc.CardBody(
                                 [
-                                    html.H5(
-                                        "Controls", 
-                                        className="fw-bold mb-4",
-                                        style={"color": "#0f172a"}
-                                    ),
-                                    html.Label(
-                                        "Metric", 
-                                        className="fw-semibold mb-2",
-                                        style={"color": "#334155"}
-                                    ),
-                                    dcc.Dropdown(
-                                        id="metric-dropdown",
-                                        options=metric_options,
-                                        value=default_metric,
-                                        clearable=False,
-                                        className="mb-4"
-                                    ),
+                                    html.H5("Controls", className="fw-bold mb-4", style={"color": "#0f172a"}),
 
-                                    html.Label(
-                                        "Compare district A", 
-                                        className="fw-semibold mb-2",
-                                        style={"color": "#334155"}
-                                    ),
-                                    dcc.Dropdown(
-                                        id="district-a-dropdown",
-                                        options=district_options,
-                                        value=district_options[0]["value"] if district_options else None,
-                                        clearable=False,
-                                        className="mb-4"
-                                    ),
+                                    # 📊 ANALYSIS
+                                    html.Div([
+                                        html.Div("📊 Analysis", className="fw-semibold mb-2", style={"color": "#334155"}),
+                                        
+                                        html.Label("Metric", className="small mb-1", style={"color": "#64748b"}),
+                                        dcc.Dropdown(
+                                            id="metric-dropdown",
+                                            options=metric_options,
+                                            value=default_metric,
+                                            clearable=False,
+                                            className="mb-3"
+                                        ),
+                                    ], className="mb-4"),
 
-                                    html.Label(
-                                        "Compare district B", 
-                                        className="fw-semibold mb-2",
-                                        style={"color": "#334155"}
-                                    ),
-                                    dcc.Dropdown(
-                                        id="district-b-dropdown",
-                                        options=district_options,
-                                        value=district_options[1]["value"] if len(district_options) > 1 else None,
-                                        clearable=False
-                                    ),
+                                    # ⚖ COMPARISON
+                                    html.Div([
+                                        html.Div("⚖ Comparison", className="fw-semibold mb-2", style={"color": "#334155"}),
+
+                                        html.Label("District A", className="small mb-1", style={"color": "#64748b"}),
+                                        dcc.Dropdown(
+                                            id="district-a-dropdown",
+                                            options=district_options,
+                                            placeholder="Select district",
+                                            className="mb-3"
+                                        ),
+
+                                        html.Label("District B", className="small mb-1", style={"color": "#64748b"}),
+                                        dcc.Dropdown(
+                                            id="district-b-dropdown",
+                                            options=district_options,
+                                            placeholder="Select district",
+                                            className="mb-3"
+                                        ),
+                                    ], className="mb-4"),
+
+                                    # 🔁 ACTIONS
+                                    html.Div([
+                                        html.Div("🔁 Actions", className="fw-semibold mb-2", style={"color": "#334155"}),
+
+                                        dbc.Button(
+                                            "Reset selection",
+                                            id="reset-district-btn",
+                                            color="secondary",
+                                            outline=True,
+                                            className="w-100"
+                                        ),
+                                    ], className="mb-4"),
+
+                                    # legend
+                                    html.Div([
+                                        html.Div("Map Legend", className="fw-semibold mb-2", style={"color": "#334155"}),
+
+                                        html.Div([
+                                            html.Span(
+                                                "Selected",
+                                                className="me-2 px-2 py-1",
+                                                style={
+                                                    "backgroundColor": "#ef4444",
+                                                    "color": "white",
+                                                    "borderRadius": "6px",
+                                                    "fontSize": "12px",
+                                                    "fontWeight": "500"
+                                                }
+                                            ),
+                                            html.Span(
+                                                "Compare A",
+                                                className="me-2 px-2 py-1",
+                                                style={
+                                                    "backgroundColor": "#2563eb",
+                                                    "color": "white",
+                                                    "borderRadius": "6px",
+                                                    "fontSize": "12px",
+                                                    "fontWeight": "500"
+                                                }
+                                            ),
+                                            html.Span(
+                                                "Compare B",
+                                                className="me-2 px-2 py-1",
+                                                style={
+                                                    "backgroundColor": "#f59e0b",
+                                                    "color": "white",
+                                                    "borderRadius": "6px",
+                                                    "fontSize": "12px",
+                                                    "fontWeight": "500"
+                                                }
+                                            )
+                                        ], className="d-flex align-items-center flex-wrap")
+                                    ],
+                                    className="mt-4 small")
                                 ],
                                 className="p-4"
                             ),
@@ -197,7 +246,21 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                                         className="fw-bold mb-3",
                                         style={"color": "#0f172a"}
                                     ),
-                                    dcc.Graph(id="district-map", config={"displayModeBar": False})
+
+                                    html.Div(
+                                        dcc.Loading(
+                                            dcc.Graph(
+                                                id="district-map",
+                                                config={"displayModeBar": False},
+                                            ),
+                                            type="circle",
+                                            overlay_style={
+                                                "visibility": "visible",
+                                                "opacity": 0.4,
+                                                "backgroundColor": "white"
+                                            }
+                                        ),
+                                    )
                                 ],
                                 className="p-4"
                             ),
@@ -209,63 +272,101 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                 className="g-4 mb-4"
             ),
 
-            # secondary visuals
+            # ranking + distribution + insights
             dbc.Row(
                 [
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.H5(
-                                        "Top District Ranking", 
-                                        className="fw-bold mb-3",
-                                        style={"color": "#0f172a"}
+                            dbc.CardBody([
+                                dbc.Tabs([
+                                    # TAB 1
+                                    dbc.Tab(
+                                        label="📊 Top Districts Ranking",
+                                        tab_id="tab-ranking",
+                                        tab_style={
+                                            "border": "1px solid #e2e8f0",
+                                            "borderRadius": "10px 10px 0 0",
+                                            "backgroundColor": "#ffffff",
+                                            "marginRight": "6px"
+                                        },
+                                        label_style={
+                                            "color": "#0f172a",
+                                            "fontWeight": "600"
+                                        },
+                                        active_label_style={
+                                            "color": "#0f172a",
+                                            "fontWeight": "600"
+                                        },
+                                        active_tab_style={
+                                            "backgroundColor": "#f8fafc",
+                                            "border": "1px solid #cbd5f5",
+                                        },
+                                        children=[
+                                            dcc.Graph(id="ranking-chart", config={"displayModeBar": False}, className="pt-3")
+                                        ]
                                     ),
-                                    dcc.Graph(id="ranking-chart", config={"displayModeBar": False})
-                                ],
-                                className="p-4"
-                            ),
-                            className="shadow-sm border-0 rounded-4 h-100"
-                        ),
-                        lg=6
-                    ),
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.H5(
-                                        "Metric Distribution", 
-                                        className="fw-bold mb-3",
-                                        style={"color": "#0f172a"}
+                                    # TAB 2
+                                    dbc.Tab(
+                                        label="📈 Metric Distribution",
+                                        tab_id="tab-distribution",
+                                        tab_style={
+                                            "border": "1px solid #e2e8f0",
+                                            "borderRadius": "10px 10px 0 0",
+                                            "backgroundColor": "#ffffff",
+                                            "marginRight": "6px"
+                                        },
+                                        label_style={
+                                            "color": "#0f172a",
+                                            "fontWeight": "600"
+                                        },
+                                        active_label_style={
+                                            "color": "#0f172a",
+                                            "fontWeight": "600"
+                                        },
+                                        active_tab_style={
+                                            "backgroundColor": "#f8fafc",
+                                            "border": "1px solid #cbd5f5",
+                                        },
+                                        children=[
+                                            dcc.Graph(id="distribution-chart", config={"displayModeBar": False}, className="pt-3")
+                                        ]
                                     ),
-                                    dcc.Graph(id="distribution-chart", config={"displayModeBar": False})
+                                    # TAB 3
+                                    dbc.Tab(
+                                        label="🧠 District Insights",
+                                        tab_id="tab-insights",
+                                        tab_style={
+                                            "border": "1px solid #e2e8f0",
+                                            "borderRadius": "10px 10px 0 0",
+                                            "backgroundColor": "#ffffff",
+                                            "marginRight": "6px"
+                                        },
+                                        label_style={
+                                            "color": "#0f172a",
+                                            "fontWeight": "600"
+                                        },
+                                        active_label_style={
+                                            "color": "#0f172a",
+                                            "fontWeight": "600"
+                                        },
+                                        active_tab_style={
+                                            "backgroundColor": "#f8fafc",
+                                            "border": "1px solid #cbd5f5",
+                                        },
+                                        children=[
+                                            html.Div(id="district-summary-card", className="pt-3")
+                                        ]
+                                    ),
                                 ],
-                                className="p-4"
-                            ),
-                            className="shadow-sm border-0 rounded-4 h-100"
-                        ),
-                        lg=6
-                    ),
-                ],
-                className="g-4 mb-4"
-            ),
+                                id="analytics-tabs",
+                                active_tab="tab-ranking",
+                                style={
+                                    "borderBottom": "none",
+                                },
+                                className="mb-2"
+                                )
 
-            # insights panels
-            dbc.Row(
-                [
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.H5(
-                                        "District Insights", 
-                                        className="fw-bold mb-3",
-                                        style={"color": "#0f172a"}
-                                    ),
-                                    html.Div(id="district-summary-card", className="pb-2")
-                                ],
-                                className="p-4"
-                            ),
+                            ], className="p-4"),
                             className="shadow-sm border-0 rounded-4 h-100"
                         ),
                         lg=6
@@ -286,12 +387,12 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                             className="shadow-sm border-0 rounded-4 h-100"
                         ),
                         lg=6
-                    ),
+                    )
                 ],
-                className="g-4 mb-5"
+                className="g-4 mb-4"
             ),
 
-            # advise panel
+            # advice panel
             dbc.Row(
                 [
                     dbc.Col(
@@ -299,20 +400,23 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                             dbc.CardBody(
                                 [
                                     html.H5(
-                                        "Location Recommendation",
+                                        "POI Categories",
                                         className="fw-bold mb-3",
                                         style={"color": "#0f172a"}
                                     ),
 
-                                    html.Label(
-                                        "POI Category",
-                                        className="fw-semibold mb-2",
-                                        style={"color": "#334155"}
-                                    ),
-
                                     html.Div(
                                         id="category-cards",
-                                        className="d-flex flex-wrap gap-3 mb-4"
+                                        className="pb-2"
+                                    ),
+
+                                    dbc.Button(
+                                        "Clear selection",
+                                        id="reset-category-btn",
+                                        color="secondary",
+                                        outline=True,
+                                        className="mt-2 w-100",
+                                        style={"display": "none"}
                                     )
                                 ],
                                 className="p-4"
@@ -332,7 +436,7 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                                         style={"color": "#0f172a"}
                                     ),
 
-                                    dcc.Graph(id="advise-map", config={"displayModeBar": False})
+                                    html.Div(id="advice-container")
                                 ],
                                 className="p-4"
                             ),
