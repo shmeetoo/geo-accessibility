@@ -1,5 +1,6 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
+import plotly.graph_objects as go
 
 def create_kpi_card(title, value, subtitle=None, icon=None):
     return dbc.Card(
@@ -251,6 +252,12 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                                         dcc.Loading(
                                             dcc.Graph(
                                                 id="district-map",
+                                                figure=go.Figure().update_layout(
+                                                    xaxis={"visible": False},
+                                                    yaxis={"visible": False},
+                                                    paper_bgcolor="rgba(0,0,0,0)",
+                                                    plot_bgcolor="rgba(0,0,0,0)"
+                                                ),
                                                 config={"displayModeBar": False},
                                             ),
                                             type="circle",
@@ -435,8 +442,17 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                                         className="fw-bold mb-3",
                                         style={"color": "#0f172a"}
                                     ),
-
-                                    html.Div(id="advice-container")
+                                    dcc.Loading(
+                                        html.Div(
+                                            id="advice-container"
+                                        ),
+                                        type="circle", 
+                                        overlay_style={
+                                            "visibility": "visible",
+                                            "opacity": 0.4,
+                                            "backgroundColor": "white"
+                                        }
+                                    )
                                 ],
                                 className="p-4"
                             ),

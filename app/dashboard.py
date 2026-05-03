@@ -596,19 +596,11 @@ def update_advice_map(category, district):
 
     df, pois, district_geom = get_advice_data(district, category)
 
-    return dcc.Loading(
-        children=html.Div(
-            dcc.Graph(
-                figure=build_advice_map(df, pois, district_geom),
-                config={"displayModeBar": False}
-            )
-        ), 
-        type="circle", 
-        overlay_style={
-            "visibility": "visible",
-            "opacity": 0.4,
-            "backgroundColor": "white"
-        }
+    return html.Div(
+        dcc.Graph(
+            figure=build_advice_map(df, pois, district_geom),
+            config={"displayModeBar": False},
+        ),
     )
 
 @app.callback(
