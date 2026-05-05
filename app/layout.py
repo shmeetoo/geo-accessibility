@@ -58,9 +58,11 @@ def create_layout(metric_options, default_metric, district_options, kpis):
                                 style={"color": "white"}
                             ),
                             html.P(
-                                "District-level geospatial analytics platform for exploring urban accessibility, population concentration, public transport availability and POI density.",
+                                "Interactive geospatial analytics dashboard for evaluating" \
+                                " urban accessibility across districts of Warsaw and identifying" \
+                                " optimal locations for new points of interest (POIs).",
                                 className="fs-5 mb-3",
-                                style={"color": "#cbd5e1", "maxWidth": "700px"}
+                                style={"color": "#cbd5e1", "maxWidth": "750px"}
                             ),
                             dbc.Badge(
                                 "Interactive Geospatial Analytics",
