@@ -7,7 +7,7 @@ echo ==========================================
 echo.
 
 echo Building and starting database + dashboard...
-docker compose --env-file .env -f docker/docker-compose.yml up --build -d
+docker compose --env-file .env.docker -f docker/docker-compose.yml up --build -d
 
 if %errorlevel% neq 0 (
     echo.

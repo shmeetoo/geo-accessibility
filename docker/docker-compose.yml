@@ -4,7 +4,7 @@ services:
     container_name: geo-accessibility-db
     restart: unless-stopped
     env_file:
-      - ../.env
+      - ../.env.docker
     ports:
       - "${POSTGRES_PORT}:5432"
     volumes:
@@ -17,13 +17,13 @@ services:
     container_name: geo-accessibility-dashboard
     restart: unless-stopped
     env_file:
-      - ../.env
+      - ../.env.docker  
     ports:
       - "8050:8050"
     depends_on:
       - db
     command: >
-      sh -c "python -m scripts.run_pipeline && python -m app.dashboard"
+      sh -c "sleep 5 && python -m scripts.run_pipeline && python -m app.dashboard"
 
 volumes:
   postgres_data:
