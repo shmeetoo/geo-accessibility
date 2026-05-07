@@ -23,7 +23,15 @@ services:
     depends_on:
       - db
     command: >
-      sh -c "sleep 5 && python -m scripts.run_pipeline && python -m app.dashboard"
-
+      sh -c "
+      if [ ! -f /app/.pipeline_done ]; then
+        echo 'Running pipeline...';
+        python -m scripts.run_pipeline;
+        touch /app/.pipeline_done;
+      else
+        echo 'Pipeline already executed';
+      fi &&
+      python -m app.dashboard
+      "
 volumes:
   postgres_data:
