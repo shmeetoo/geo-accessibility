@@ -39,9 +39,9 @@ def process_pois(input_path: str, output_path: str) -> gpd.GeoDataFrame:
     # set / change CRS to EPSG:4326
     if gdf.crs is None:
         logger.warning("POIs CRS is missing, assuming EPSG:4326")
-        gdf.set_crs(epsg=4326)
+        gdf = gdf.set_crs(epsg=4326)
     else:
-        gdf.to_crs(epsg=4326)
+        gdf = gdf.to_crs(epsg=4326)
 
     # skip faulty geometry
     gdf = gdf[gdf.geometry.notnull()].copy()

@@ -21,7 +21,7 @@ def load_dashboard_data():
     """
 
     gdf = gpd.read_postgis(query, engine, geom_col="geometry")
-    gdf.to_crs(epsg=4326)
+    gdf = gdf.to_crs(epsg=4326)
 
     return gdf
 
