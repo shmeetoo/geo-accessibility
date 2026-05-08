@@ -11,7 +11,8 @@ logger = get_logger(__name__)
 def ingest_transport_stops(place_name: str, output_path: str) -> gpd.GeoDataFrame:
     tags = {
         "highway": ["bus_stop"],
-        "public_transport": ["platform", "stop_position"]
+        "railway": ["tram_stop", "station"],
+        "station": ["subway"]
     }
 
     logger.info("Downloading transport stops for %s", place_name)

@@ -8,14 +8,15 @@ logger = get_logger(__name__)
 
 def classify_stop_type(row: pd.Series) -> str:
     highway = row.get("highway")
-    public_transport = row.get("public_transport")
+    railway = row.get("railway")
+    station = row.get("station")
 
     if highway == "bus_stop":
-        return "bus_stop"
-    if public_transport == "platform":
-        return "platform"
-    if public_transport == "stop_position":
-        return "stop_position"
+        return "bus"
+    if railway == "tram_stop":
+        return "tram"
+    if station == "subway":
+        return "metro"
     return "other"
 
 def process_transport(input_path: str, output_path: str) -> gpd.GeoDataFrame:
@@ -27,9 +28,9 @@ def process_transport(input_path: str, output_path: str) -> gpd.GeoDataFrame:
     # set / change CRS to EPSG:4326
     if gdf.crs is None:
         logger.warning("Transport CRS is missing, assuming EPSG:4326")
-        gdf.set_crs(epsg=4326)
+        gdf = gdf.set_crs(epsg=4326)
     else:
-        gdf.to_crs(epsg=4326)
+        gdf = gdf.to_crs(epsg=4326)
 
     # skip faulty geometry
     gdf = gdf[gdf.geometry.notnull()].copy()
@@ -40,8 +41,10 @@ def process_transport(input_path: str, output_path: str) -> gpd.GeoDataFrame:
         gdf["name"] = None
     if "highway" not in gdf.columns:
         gdf["highway"] = None
-    if "public_transport" not in gdf.columns:
-        gdf["public_transport"] = None
+    if "railway" not in gdf.columns:
+        gdf["railway"] = None
+    if "station" not in gdf.columns:
+        gdf["station"] = None
 
     # add stop type
     gdf["stop_type"] = gdf.apply(classify_stop_type, axis=1)
